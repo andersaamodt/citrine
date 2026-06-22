@@ -1,0 +1,26 @@
+# Source-only checkout hygiene.
+.DS_Store
+Thumbs.db
+
+# Editor and local tool state.
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs, caches, and dependency/build output do not belong in this repo.
+*.log
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.tmp/
+tmp/
+
+# Packaged artifacts.
+*.tgz
+*.zip
+*.tar
+*.tar.gz
