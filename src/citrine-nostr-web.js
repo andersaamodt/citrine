@@ -108,6 +108,39 @@
     return String(msg.method || '').trim() === 'connect' && !extractConnectSecret(msg);
   }
 
+  function createAuthEventTemplate(options) {
+    var opts = options && typeof options === 'object' ? options : {};
+    var tags = [];
+    var challenge = String(opts.challenge || '').trim();
+    var domain = String(opts.domain || opts.host || '').trim();
+    var origin = String(opts.origin || '').trim();
+    var url = String(opts.url || '').trim();
+    var method = String(opts.method || '').trim().toUpperCase();
+    var action = String(opts.action || 'login').trim();
+    var pubkey = normalizePubkeyHex(opts.pubkey || '');
+    if (challenge) tags.push(['challenge', challenge]);
+    if (origin) tags.push(['origin', origin]);
+    if (domain) tags.push(['domain', domain]);
+    if (url) tags.push(['u', url]);
+    if (method) tags.push(['method', method]);
+    if (action && action !== 'login') tags.push(['action', action]);
+    if (Array.isArray(opts.extraTags)) {
+      opts.extraTags.forEach(function (tag) {
+        if (Array.isArray(tag) && tag.length && tag[0]) {
+          tags.push(tag.map(function (part) { return String(part); }));
+        }
+      });
+    }
+    var event = {
+      kind: Number(opts.kind || 22242),
+      created_at: Number(opts.createdAt || Math.floor(Date.now() / 1000)),
+      tags: tags,
+      content: String(opts.content || '')
+    };
+    if (pubkey) event.pubkey = pubkey;
+    return event;
+  }
+
   function wait(delayMs) {
     return new Promise(function (resolve) {
       setTimeout(resolve, Math.max(0, Number(delayMs || 0)));
@@ -451,6 +484,7 @@
     buildNostrConnectUri: buildNostrConnectUri,
     extractConnectSecret: extractConnectSecret,
     isConnectAck: isConnectAck,
+    createAuthEventTemplate: createAuthEventTemplate,
     withTimedOutRetry: withTimedOutRetry,
     createSessionStorageAdapter: createSessionStorageAdapter,
     createMemoryStorageAdapter: createMemoryStorageAdapter,

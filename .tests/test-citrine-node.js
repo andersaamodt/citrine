@@ -64,6 +64,27 @@ add('withTimedOutRetry does not retry unrelated errors', async () => {
   assert.strictEqual(attempts, 1);
 });
 
+add('createAuthEventTemplate builds signer-neutral Nostr auth events', () => {
+  const event = citrine.createAuthEventTemplate({
+    challenge: 'abc123',
+    origin: 'https://example.test',
+    domain: 'example.test',
+    action: 'revoke_all',
+    pubkey: 'B'.repeat(64),
+    createdAt: 1234567890
+  });
+  assert.strictEqual(event.kind, 22242);
+  assert.strictEqual(event.created_at, 1234567890);
+  assert.strictEqual(event.content, '');
+  assert.strictEqual(event.pubkey, 'b'.repeat(64));
+  assert.deepStrictEqual(event.tags, [
+    ['challenge', 'abc123'],
+    ['origin', 'https://example.test'],
+    ['domain', 'example.test'],
+    ['action', 'revoke_all']
+  ]);
+});
+
 add('createNip46Client retries account pubkey after connect ack settle window', async () => {
   let attempts = 0;
   const statuses = [];
