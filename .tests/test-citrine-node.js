@@ -178,6 +178,10 @@ add('createSharedNostrSigner normalizes browser and phone signer access', async 
 });
 
 add('zap helpers build NIP-57 requests and unsigned invoices', async () => {
+  assert.strictEqual(
+    citrine.bech32Encode('lnurl', 'https://wallet.example/.well-known/lnurlp/alice'),
+    'lnurl1dp68gurn8ghj7ampd3kx2apwv4uxzmtsd3jj7tnhv4kxctttdehhwm30d3h82unvwqhkzmrfvdjskx890f'
+  );
   const lnurlInfo = {
     encodedLnurl: citrine.bech32Encode('lnurl', 'https://wallet.example/.well-known/lnurlp/alice'),
     nostrPubkey: 'd'.repeat(64)

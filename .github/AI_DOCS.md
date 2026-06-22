@@ -9,6 +9,8 @@
 - Node is used only by `.tests/test-citrine.sh` to execute JavaScript unit
   tests; no package manager, dependency cache, or build output belongs here.
 - Test output must stay in `${TMPDIR:-/tmp}` or process output, not the repo.
+- Follow `.github/NOSTR_TOOLS_AUDIT.md` before replacing Citrine internals with
+  `nostr-tools` helpers.
 
 ## Scope
 
