@@ -1,6 +1,9 @@
 'use strict';
 
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
 const citrine = require('../src/citrine-nostr-web.js');
 
 async function test(name, fn) {
@@ -17,6 +20,30 @@ const tests = [];
 function add(name, fn) {
   tests.push([name, fn]);
 }
+
+add('exports lowercase namespaced runtime API with flat compatibility aliases', () => {
+  assert.strictEqual(citrine.nostr.getNip07Signer, citrine.getNip07Signer);
+  assert.strictEqual(citrine.nostr.signAuthChallenge, citrine.signAuthChallenge);
+  assert.strictEqual(citrine.zaps.createZapInvoice, citrine.createZapInvoice);
+  assert.strictEqual(citrine.zaps.createZapFlow, citrine.createZapFlow);
+  assert.strictEqual(citrine.web.ensureNostrLoginDialog, citrine.ensureNostrLoginDialog);
+  assert.strictEqual(citrine.web.renderNostrRecommendations, citrine.renderNostrRecommendations);
+  assert.strictEqual(citrine.legacy.getNip07Signer, citrine.getNip07Signer);
+});
+
+add('browser global uses lowercase citrine with legacy aliases', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'citrine-nostr-web.js'), 'utf8');
+  const context = { Object, Error, Promise, URL, URLSearchParams, TextEncoder, TextDecoder, setTimeout, clearTimeout };
+  context.globalThis = context;
+  context.self = context;
+  vm.runInNewContext(source, context, { filename: 'citrine-nostr-web.js' });
+  assert(context.citrine);
+  assert.strictEqual(context.Citrine, context.citrine);
+  assert.strictEqual(context.CitrineNostrWeb, context.citrine);
+  assert.strictEqual(context.citrine.nostr.getNip07Signer, context.citrine.getNip07Signer);
+  assert.strictEqual(context.citrine.zaps.requestZapInvoice, context.citrine.requestZapInvoice);
+  assert.strictEqual(context.citrine.web.nostrLoginDialogHtml, context.citrine.nostrLoginDialogHtml);
+});
 
 add('buildNostrConnectUri keeps app-neutral NIP-46 parameters', () => {
   const uri = citrine.buildNostrConnectUri({

@@ -34,3 +34,18 @@ Validate with:
 ```sh
 sh .tests/test-citrine.sh
 ```
+
+## Runtime API
+
+Use lowercase `citrine` in browser consumers:
+
+```js
+window.citrine.nostr.getNip07Signer(window);
+window.citrine.zaps.createZapInvoice({ lud16: 'name@example.com', sats: 21 });
+window.citrine.web.ensureNostrLoginDialog(document);
+```
+
+The CommonJS export has the same shape. Flat helper methods and the browser
+globals `window.Citrine` and `window.CitrineNostrWeb` remain compatibility
+aliases, but new consumers should use `citrine.nostr`, `citrine.zaps`, and
+`citrine.web`.
