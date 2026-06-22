@@ -12,10 +12,14 @@ Current scope:
 - NIP-07 signer helpers.
 - Shared browser/phone signer facade for site UI that needs `signEvent` and
   `getPublicKey`.
+- Shared auth challenge signing for Nostr login flows.
+- Hex/npub public key normalization.
 - Return-from-signer refresh binding for `pageshow`, `focus`, and visibility.
+- NIP-55 Android signer callback and URI helpers.
 - Shared Nostr login dialog markup and app recommendations.
 - NIP-57 zap protocol helpers for LNURL metadata, zap request templates,
   signed zap requests, and invoice callbacks.
+- Headless zap flow helpers for WebLN payment and invoice copy behavior.
 
 Out of scope:
 

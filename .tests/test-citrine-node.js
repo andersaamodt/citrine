@@ -85,6 +85,35 @@ add('createAuthEventTemplate builds signer-neutral Nostr auth events', () => {
   ]);
 });
 
+add('signAuthChallenge signs shared auth templates', async () => {
+  const signed = await citrine.signAuthChallenge({
+    getPublicKey: () => Promise.resolve('A'.repeat(64)),
+    signEvent: (event) => Promise.resolve(Object.assign({}, event, { id: 'signed-auth' }))
+  }, {
+    challenge: 'challenge-1',
+    domain: 'example.test',
+    origin: 'https://example.test',
+    content: 'login'
+  });
+  assert.strictEqual(signed.pubkey, 'a'.repeat(64));
+  assert.strictEqual(signed.event.id, 'signed-auth');
+  assert(signed.event.tags.some((tag) => tag[0] === 'challenge' && tag[1] === 'challenge-1'));
+});
+
+add('normalizeNostrPubkey accepts hex and npub through optional tools', () => {
+  assert.strictEqual(citrine.normalizeNostrPubkey('A'.repeat(64)), 'a'.repeat(64));
+  const tools = {
+    nip19: {
+      decode: (value) => {
+        assert.strictEqual(value, 'npub1example');
+        return { type: 'npub', data: 'B'.repeat(64) };
+      }
+    }
+  };
+  assert.strictEqual(citrine.normalizeNostrPubkey('npub1example', tools), 'b'.repeat(64));
+  assert.strictEqual(citrine.normalizeNostrPubkey('npub1example'), '');
+});
+
 add('nostr login dialog owns shared modal markup', () => {
   const html = citrine.nostrLoginDialogHtml({ title: 'Log in' });
   assert(html.includes('id="auth-modal"'));
@@ -126,6 +155,15 @@ add('createNip46Client retries account pubkey after connect ack settle window', 
   assert.strictEqual(pubkey, 'b'.repeat(64));
   assert.strictEqual(attempts, 3);
   assert.deepStrictEqual(statuses.map((event) => event.type), ['retry', 'retry']);
+});
+
+add('createNip46Client exposes launch and reset controls', () => {
+  const client = citrine.createNip46Client({ relays: ['wss://relay.example'] });
+  assert.strictEqual(client.setLaunchPending(true), true);
+  assert.strictEqual(client.state().launchPending, true);
+  client.resetPairing();
+  assert.strictEqual(client.state().active, false);
+  assert.strictEqual(client.state().launchPending, false);
 });
 
 add('hasNostrTools and waitForNostrTools expose shared readiness checks', async () => {
@@ -245,6 +283,47 @@ add('createZapInvoice fetches LNURL metadata and callback invoices', async () =>
   assert.strictEqual(result.invoice, 'lnbc1invoice');
   assert.strictEqual(result.signed, false);
   assert.strictEqual(calls.length, 2);
+});
+
+add('NIP-55 helpers build callback URIs and parse signer returns', () => {
+  const callback = citrine.buildNip55CallbackUrl('https://app.example/play?x=1#old=1');
+  assert.strictEqual(callback, 'https://app.example/play#nostrSignerResult=');
+  const uri = citrine.buildNip55Uri({
+    type: 'get_public_key',
+    params: { appName: 'Citrine', callbackUrl: callback, permissions: [] }
+  });
+  assert(uri.startsWith('nostrsigner:?'));
+  assert(uri.includes('type=get_public_key'));
+  assert(uri.includes('callbackUrl='));
+  const parsed = citrine.parseNip55Callback('https://app.example/play?package=x#nostrSignerResult=' + 'c'.repeat(64));
+  assert.strictEqual(parsed.present, true);
+  assert.strictEqual(parsed.rejected, false);
+  assert.strictEqual(parsed.result, 'c'.repeat(64));
+  assert.strictEqual(parsed.cleanUrl, '/play');
+});
+
+add('WebLN copy and zap flow helpers stay headless', async () => {
+  const payments = [];
+  const target = {
+    webln: {
+      enable: () => Promise.resolve(),
+      sendPayment: (invoice) => {
+        payments.push(invoice);
+        return Promise.resolve({ preimage: 'ok' });
+      }
+    },
+    navigator: {
+      clipboard: {
+        writeText: (text) => Promise.resolve(text)
+      }
+    }
+  };
+  assert.deepStrictEqual(await citrine.payLightningInvoiceWithWebLN('lnbc1test', target), { preimage: 'ok' });
+  assert.deepStrictEqual(payments, ['lnbc1test']);
+  assert.strictEqual(await citrine.copyTextToClipboard('lnbc1test', target), 'lnbc1test');
+  const flow = citrine.createZapFlow({ target });
+  assert.deepStrictEqual(await flow.payInvoice('lnbc1again'), { preimage: 'ok' });
+  assert.strictEqual(await flow.copyInvoice('lnbc1again'), 'lnbc1again');
 });
 
 add('bindSignerReturnRefresh listens to pageshow focus and visible return', () => {
