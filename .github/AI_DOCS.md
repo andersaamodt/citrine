@@ -12,7 +12,8 @@
 
 ## Scope
 
-- Keep reusable NIP-46 and NIP-07 mechanics here.
+- Keep reusable NIP-46, NIP-07, login dialog, signer facade, and NIP-57 zap
+  protocol mechanics here.
 - Keep Gazeta and Pieplate product policy in their own repos.
 - Do not add app-specific UI, account creation, admin authorization, draft sync,
   or site deployment behavior.
@@ -25,3 +26,6 @@
   mobile signer relay listeners may need a short settle window.
 - Custom-protocol signer launches should happen from a prepared user action;
   if setup is still async, make the next tap explicit.
+- Zap UI can stay site-specific, but LNURL resolution, Bech32 LNURL encoding,
+  NIP-57 zap request construction, and callback invoice requests are shared
+  protocol work and belong in Citrine.

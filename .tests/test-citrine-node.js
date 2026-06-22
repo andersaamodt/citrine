@@ -128,6 +128,121 @@ add('createNip46Client retries account pubkey after connect ack settle window', 
   assert.deepStrictEqual(statuses.map((event) => event.type), ['retry', 'retry']);
 });
 
+add('hasNostrTools and waitForNostrTools expose shared readiness checks', async () => {
+  const tools = {
+    generateSecretKey: () => new Uint8Array(32),
+    getPublicKey: () => 'a'.repeat(64),
+    finalizeEvent: (event) => event,
+    nip04: {
+      encrypt: () => Promise.resolve('cipher'),
+      decrypt: () => Promise.resolve('{}')
+    },
+    SimplePool: function SimplePool() {}
+  };
+  const target = { NostrTools: tools };
+  assert.strictEqual(citrine.hasNostrTools(target), true);
+  assert.strictEqual(citrine.hasNostrTools({}), false);
+  const resolved = await citrine.waitForNostrTools({ target });
+  assert.strictEqual(resolved, tools);
+});
+
+add('createSharedNostrSigner normalizes browser and phone signer access', async () => {
+  const browserEvent = { kind: 1, tags: [], content: 'hello' };
+  const browserApi = citrine.createSharedNostrSigner({
+    target: {
+      nostr: {
+        getPublicKey: () => Promise.resolve('A'.repeat(64)),
+        signEvent: (event) => Promise.resolve(Object.assign({}, event, { id: 'browser' }))
+      }
+    }
+  });
+  assert.strictEqual(await browserApi.getPublicKey(), 'a'.repeat(64));
+  assert.strictEqual((await browserApi.signEvent(browserEvent)).id, 'browser');
+  assert.deepStrictEqual(await browserApi.getStatus(), { available: true, method: 'browser', pubkey: 'a'.repeat(64) });
+
+  const phoneApi = citrine.createSharedNostrSigner({
+    target: {},
+    nip46Client: {
+      state: () => ({ signerPubkey: 'b'.repeat(64), accountPubkey: 'c'.repeat(64) }),
+      ensurePairing: () => Promise.resolve(),
+      getAccountPubkey: () => Promise.resolve('c'.repeat(64)),
+      sendRpc: (method, params) => {
+        assert.strictEqual(method, 'sign_event');
+        return Promise.resolve(JSON.stringify(Object.assign(JSON.parse(params[0]), { id: 'phone' })));
+      }
+    }
+  });
+  assert.strictEqual(await phoneApi.getPublicKey(), 'c'.repeat(64));
+  assert.strictEqual((await phoneApi.signEvent(browserEvent)).id, 'phone');
+  assert.deepStrictEqual(await phoneApi.getStatus(), { available: true, method: 'nip46', pubkey: 'c'.repeat(64) });
+});
+
+add('zap helpers build NIP-57 requests and unsigned invoices', async () => {
+  const lnurlInfo = {
+    encodedLnurl: citrine.bech32Encode('lnurl', 'https://wallet.example/.well-known/lnurlp/alice'),
+    nostrPubkey: 'd'.repeat(64)
+  };
+  const template = citrine.createZapRequestTemplate({
+    lnurlInfo,
+    zapConfig: { relays: ['wss://relay.example'] },
+    target: { eventId: 'e'.repeat(64), kind: 30023 },
+    amountMsats: 100000,
+    note: 'thanks',
+    createdAt: 123
+  });
+  assert.strictEqual(template.kind, 9734);
+  assert.deepStrictEqual(template.tags[0], ['relays', 'wss://relay.example']);
+  assert(template.tags.some((tag) => tag[0] === 'p' && tag[1] === 'd'.repeat(64)));
+  assert(template.tags.some((tag) => tag[0] === 'e' && tag[1] === 'e'.repeat(64)));
+  assert(template.tags.some((tag) => tag[0] === 'k' && tag[1] === '30023'));
+
+  const signed = await citrine.createSignedZapRequest({
+    signer: {
+      getPublicKey: () => Promise.resolve('f'.repeat(64)),
+      signEvent: (event) => Promise.resolve(Object.assign({}, event, { id: 'signed' }))
+    },
+    lnurlInfo,
+    zapConfig: { relays: ['wss://relay.example'] },
+    amountMsats: 100000
+  });
+  assert.strictEqual(signed.pubkey, 'f'.repeat(64));
+  assert.strictEqual(signed.id, 'signed');
+});
+
+add('createZapInvoice fetches LNURL metadata and callback invoices', async () => {
+  const calls = [];
+  const result = await citrine.createZapInvoice({
+    lud16: 'alice@wallet.example',
+    sats: 100,
+    note: 'nice post',
+    fetch: (url) => {
+      calls.push(url);
+      if (url.includes('/.well-known/lnurlp/alice')) {
+        return Promise.resolve({
+          ok: true,
+          text: () => Promise.resolve(JSON.stringify({
+            allowsNostr: true,
+            nostrPubkey: 'a'.repeat(64),
+            callback: '/lnurl/callback',
+            minSendable: 1000,
+            maxSendable: 1000000,
+            commentAllowed: 20
+          }))
+        });
+      }
+      assert(url.includes('amount=100000'));
+      assert(url.includes('comment=nice+post'));
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(JSON.stringify({ pr: 'lnbc1invoice' }))
+      });
+    }
+  });
+  assert.strictEqual(result.invoice, 'lnbc1invoice');
+  assert.strictEqual(result.signed, false);
+  assert.strictEqual(calls.length, 2);
+});
+
 add('bindSignerReturnRefresh listens to pageshow focus and visible return', () => {
   const listeners = {};
   const docListeners = {};

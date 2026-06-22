@@ -2,11 +2,16 @@
 
 ## Gazeta
 
-- Keep Gazeta's server challenge, session, CSRF, admin authorization, and
-  recommendation UI in Gazeta.
-- Candidate Citrine adapter points:
+- Keep Gazeta's server challenge, session, CSRF, admin authorization, zap modal
+  UI, amount presets, invoice copy/payment UI, and site page prefetch/bootstrap
+  in Gazeta.
+- Citrine adapter points:
   - `buildNostrConnectUri`
   - `extractConnectSecret`
+  - Nostr login dialog and recommendations
+  - Nostr tools readiness checks
+  - shared browser/phone signer facade
+  - NIP-57 zap protocol helpers
   - NIP-46 pending RPC handling
   - `getAccountPubkeyWithRetry`
   - return refresh binding
@@ -18,7 +23,7 @@
 
 - Keep Pieplate's anonymous-first game flow, draft sync, and compact account UI
   in Pieplate.
-- Candidate Citrine adapter points:
+- Citrine adapter points:
   - `buildNostrConnectUri`
   - tab-scoped NIP-46 storage adapter
   - `getAccountPubkeyWithRetry`
