@@ -85,6 +85,26 @@ add('createAuthEventTemplate builds signer-neutral Nostr auth events', () => {
   ]);
 });
 
+add('nostr login dialog owns shared modal markup', () => {
+  const html = citrine.nostrLoginDialogHtml({ title: 'Log in' });
+  assert(html.includes('id="auth-modal"'));
+  assert(html.includes('id="auth-nip46-qr"'));
+  assert(html.includes('id="auth-login-apps"'));
+  assert(html.includes('Recommended Apps'));
+  assert(!html.includes('Open Amber'));
+});
+
+add('recommendations keep Amber as Android login recommendation without Amber-specific login copy', () => {
+  const android = citrine.nostrLoginRecommendation('phone', 'android');
+  assert.strictEqual(android.note, 'Recommended for Android Nostr Connect login.');
+  assert.strictEqual(android.apps[0].name, 'Amber');
+  assert(android.apps[0].stores.some((store) => store.source === 'F-Droid'));
+  const helper = citrine.signInHelperMessage('phone');
+  assert(helper.includes('Your Nostr public key is your account'));
+  assert(helper.includes('Connect Nostr with the link or QR'));
+  assert(!helper.includes('Amber'));
+});
+
 add('createNip46Client retries account pubkey after connect ack settle window', async () => {
   let attempts = 0;
   const statuses = [];
