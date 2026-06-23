@@ -342,3 +342,6 @@ NIP-46 retry behavior, signer facade behavior, NIP-55 callbacks, NIP-57 zap
 request/invoice behavior, WebLN/clipboard helpers, and return-from-signer
 refresh binding.
 
+## License
+
+Citrine is licensed under the Open Wizardry License 3.1. See `LICENSE`.
