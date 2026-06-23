@@ -21,32 +21,39 @@ function add(name, fn) {
   tests.push([name, fn]);
 }
 
-add('exports lowercase namespaced runtime API with flat compatibility aliases', () => {
-  assert.strictEqual(citrine.nostr.getNip07Signer, citrine.getNip07Signer);
-  assert.strictEqual(citrine.nostr.signAuthChallenge, citrine.signAuthChallenge);
-  assert.strictEqual(citrine.zaps.createZapInvoice, citrine.createZapInvoice);
-  assert.strictEqual(citrine.zaps.createZapFlow, citrine.createZapFlow);
-  assert.strictEqual(citrine.web.ensureNostrLoginDialog, citrine.ensureNostrLoginDialog);
-  assert.strictEqual(citrine.web.renderNostrRecommendations, citrine.renderNostrRecommendations);
-  assert.strictEqual(citrine.legacy.getNip07Signer, citrine.getNip07Signer);
+add('exports only the lowercase namespaced runtime API', () => {
+  assert.deepStrictEqual(Object.keys(citrine).sort(), ['nostr', 'web', 'zaps']);
+  assert.strictEqual(typeof citrine.nostr.getNip07Signer, 'function');
+  assert.strictEqual(typeof citrine.nostr.signAuthChallenge, 'function');
+  assert.strictEqual(typeof citrine.zaps.createZapInvoice, 'function');
+  assert.strictEqual(typeof citrine.zaps.createZapFlow, 'function');
+  assert.strictEqual(typeof citrine.web.ensureNostrLoginDialog, 'function');
+  assert.strictEqual(typeof citrine.web.renderNostrRecommendations, 'function');
+  assert.strictEqual(citrine.getNip07Signer, undefined);
+  assert.strictEqual(citrine.createZapInvoice, undefined);
+  assert.strictEqual(citrine.ensureNostrLoginDialog, undefined);
+  assert.strictEqual(citrine.legacy, undefined);
 });
 
-add('browser global uses lowercase citrine with legacy aliases', () => {
+add('browser global uses only lowercase citrine', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'citrine-nostr-web.js'), 'utf8');
   const context = { Object, Error, Promise, URL, URLSearchParams, TextEncoder, TextDecoder, setTimeout, clearTimeout };
   context.globalThis = context;
   context.self = context;
   vm.runInNewContext(source, context, { filename: 'citrine-nostr-web.js' });
   assert(context.citrine);
-  assert.strictEqual(context.Citrine, context.citrine);
-  assert.strictEqual(context.CitrineNostrWeb, context.citrine);
-  assert.strictEqual(context.citrine.nostr.getNip07Signer, context.citrine.getNip07Signer);
-  assert.strictEqual(context.citrine.zaps.requestZapInvoice, context.citrine.requestZapInvoice);
-  assert.strictEqual(context.citrine.web.nostrLoginDialogHtml, context.citrine.nostrLoginDialogHtml);
+  assert.strictEqual(context.Citrine, undefined);
+  assert.strictEqual(context.CitrineNostrWeb, undefined);
+  assert.strictEqual(typeof context.citrine.nostr.getNip07Signer, 'function');
+  assert.strictEqual(typeof context.citrine.zaps.requestZapInvoice, 'function');
+  assert.strictEqual(typeof context.citrine.web.nostrLoginDialogHtml, 'function');
+  assert.strictEqual(context.citrine.getNip07Signer, undefined);
+  assert.strictEqual(context.citrine.requestZapInvoice, undefined);
+  assert.strictEqual(context.citrine.nostrLoginDialogHtml, undefined);
 });
 
 add('buildNostrConnectUri keeps app-neutral NIP-46 parameters', () => {
-  const uri = citrine.buildNostrConnectUri({
+  const uri = citrine.nostr.buildNostrConnectUri({
     appPubkey: 'a'.repeat(64),
     pairSecret: 'secret',
     relays: ['wss://relay.example', 'http://bad.example'],
@@ -64,7 +71,7 @@ add('buildNostrConnectUri keeps app-neutral NIP-46 parameters', () => {
 add('withTimedOutRetry retries timed out failures only', async () => {
   let attempts = 0;
   const waits = [];
-  const result = await citrine.withTimedOutRetry(() => {
+  const result = await citrine.nostr.withTimedOutRetry(() => {
     attempts += 1;
     if (attempts < 3) throw new Error('Phone signer timed out.');
     return 'done';
@@ -82,7 +89,7 @@ add('withTimedOutRetry retries timed out failures only', async () => {
 
 add('withTimedOutRetry does not retry unrelated errors', async () => {
   let attempts = 0;
-  await assert.rejects(citrine.withTimedOutRetry(() => {
+  await assert.rejects(citrine.nostr.withTimedOutRetry(() => {
     attempts += 1;
     throw new Error('Signer rejected request.');
   }, {
@@ -92,7 +99,7 @@ add('withTimedOutRetry does not retry unrelated errors', async () => {
 });
 
 add('createAuthEventTemplate builds signer-neutral Nostr auth events', () => {
-  const event = citrine.createAuthEventTemplate({
+  const event = citrine.nostr.createAuthEventTemplate({
     challenge: 'abc123',
     origin: 'https://example.test',
     domain: 'example.test',
@@ -113,7 +120,7 @@ add('createAuthEventTemplate builds signer-neutral Nostr auth events', () => {
 });
 
 add('signAuthChallenge signs shared auth templates', async () => {
-  const signed = await citrine.signAuthChallenge({
+  const signed = await citrine.nostr.signAuthChallenge({
     getPublicKey: () => Promise.resolve('A'.repeat(64)),
     signEvent: (event) => Promise.resolve(Object.assign({}, event, { id: 'signed-auth' }))
   }, {
@@ -128,7 +135,7 @@ add('signAuthChallenge signs shared auth templates', async () => {
 });
 
 add('normalizeNostrPubkey accepts hex and npub through optional tools', () => {
-  assert.strictEqual(citrine.normalizeNostrPubkey('A'.repeat(64)), 'a'.repeat(64));
+  assert.strictEqual(citrine.nostr.normalizeNostrPubkey('A'.repeat(64)), 'a'.repeat(64));
   const tools = {
     nip19: {
       decode: (value) => {
@@ -137,12 +144,12 @@ add('normalizeNostrPubkey accepts hex and npub through optional tools', () => {
       }
     }
   };
-  assert.strictEqual(citrine.normalizeNostrPubkey('npub1example', tools), 'b'.repeat(64));
-  assert.strictEqual(citrine.normalizeNostrPubkey('npub1example'), '');
+  assert.strictEqual(citrine.nostr.normalizeNostrPubkey('npub1example', tools), 'b'.repeat(64));
+  assert.strictEqual(citrine.nostr.normalizeNostrPubkey('npub1example'), '');
 });
 
 add('nostr login dialog owns shared modal markup', () => {
-  const html = citrine.nostrLoginDialogHtml({ title: 'Log in' });
+  const html = citrine.web.nostrLoginDialogHtml({ title: 'Log in' });
   assert(html.includes('id="auth-modal"'));
   assert(html.includes('id="auth-nip46-qr"'));
   assert(html.includes('id="auth-login-apps"'));
@@ -151,11 +158,11 @@ add('nostr login dialog owns shared modal markup', () => {
 });
 
 add('recommendations keep Amber as Android login recommendation without Amber-specific login copy', () => {
-  const android = citrine.nostrLoginRecommendation('phone', 'android');
+  const android = citrine.web.nostrLoginRecommendation('phone', 'android');
   assert.strictEqual(android.note, 'Recommended for Android Nostr Connect login.');
   assert.strictEqual(android.apps[0].name, 'Amber');
   assert(android.apps[0].stores.some((store) => store.source === 'F-Droid'));
-  const helper = citrine.signInHelperMessage('phone');
+  const helper = citrine.web.signInHelperMessage('phone');
   assert(helper.includes('Your Nostr public key is your account'));
   assert(helper.includes('Connect Nostr with the link or QR'));
   assert(!helper.includes('Amber'));
@@ -164,7 +171,7 @@ add('recommendations keep Amber as Android login recommendation without Amber-sp
 add('createNip46Client retries account pubkey after connect ack settle window', async () => {
   let attempts = 0;
   const statuses = [];
-  const client = citrine.createNip46Client({
+  const client = citrine.nostr.createNip46Client({
     relays: ['wss://relay.example'],
     retryDelays: [1, 2, 3],
     wait: () => Promise.resolve(),
@@ -185,7 +192,7 @@ add('createNip46Client retries account pubkey after connect ack settle window', 
 });
 
 add('createNip46Client exposes launch and reset controls', () => {
-  const client = citrine.createNip46Client({ relays: ['wss://relay.example'] });
+  const client = citrine.nostr.createNip46Client({ relays: ['wss://relay.example'] });
   assert.strictEqual(client.setLaunchPending(true), true);
   assert.strictEqual(client.state().launchPending, true);
   client.resetPairing();
@@ -205,15 +212,15 @@ add('hasNostrTools and waitForNostrTools expose shared readiness checks', async 
     SimplePool: function SimplePool() {}
   };
   const target = { NostrTools: tools };
-  assert.strictEqual(citrine.hasNostrTools(target), true);
-  assert.strictEqual(citrine.hasNostrTools({}), false);
-  const resolved = await citrine.waitForNostrTools({ target });
+  assert.strictEqual(citrine.nostr.hasNostrTools(target), true);
+  assert.strictEqual(citrine.nostr.hasNostrTools({}), false);
+  const resolved = await citrine.nostr.waitForNostrTools({ target });
   assert.strictEqual(resolved, tools);
 });
 
 add('createSharedNostrSigner normalizes browser and phone signer access', async () => {
   const browserEvent = { kind: 1, tags: [], content: 'hello' };
-  const browserApi = citrine.createSharedNostrSigner({
+  const browserApi = citrine.nostr.createSharedNostrSigner({
     target: {
       nostr: {
         getPublicKey: () => Promise.resolve('A'.repeat(64)),
@@ -225,7 +232,7 @@ add('createSharedNostrSigner normalizes browser and phone signer access', async 
   assert.strictEqual((await browserApi.signEvent(browserEvent)).id, 'browser');
   assert.deepStrictEqual(await browserApi.getStatus(), { available: true, method: 'browser', pubkey: 'a'.repeat(64) });
 
-  const phoneApi = citrine.createSharedNostrSigner({
+  const phoneApi = citrine.nostr.createSharedNostrSigner({
     target: {},
     nip46Client: {
       state: () => ({ signerPubkey: 'b'.repeat(64), accountPubkey: 'c'.repeat(64) }),
@@ -244,14 +251,14 @@ add('createSharedNostrSigner normalizes browser and phone signer access', async 
 
 add('zap helpers build NIP-57 requests and unsigned invoices', async () => {
   assert.strictEqual(
-    citrine.bech32Encode('lnurl', 'https://wallet.example/.well-known/lnurlp/alice'),
+    citrine.zaps.bech32Encode('lnurl', 'https://wallet.example/.well-known/lnurlp/alice'),
     'lnurl1dp68gurn8ghj7ampd3kx2apwv4uxzmtsd3jj7tnhv4kxctttdehhwm30d3h82unvwqhkzmrfvdjskx890f'
   );
   const lnurlInfo = {
-    encodedLnurl: citrine.bech32Encode('lnurl', 'https://wallet.example/.well-known/lnurlp/alice'),
+    encodedLnurl: citrine.zaps.bech32Encode('lnurl', 'https://wallet.example/.well-known/lnurlp/alice'),
     nostrPubkey: 'd'.repeat(64)
   };
-  const template = citrine.createZapRequestTemplate({
+  const template = citrine.zaps.createZapRequestTemplate({
     lnurlInfo,
     zapConfig: { relays: ['wss://relay.example'] },
     target: { eventId: 'e'.repeat(64), kind: 30023 },
@@ -265,7 +272,7 @@ add('zap helpers build NIP-57 requests and unsigned invoices', async () => {
   assert(template.tags.some((tag) => tag[0] === 'e' && tag[1] === 'e'.repeat(64)));
   assert(template.tags.some((tag) => tag[0] === 'k' && tag[1] === '30023'));
 
-  const signed = await citrine.createSignedZapRequest({
+  const signed = await citrine.zaps.createSignedZapRequest({
     signer: {
       getPublicKey: () => Promise.resolve('f'.repeat(64)),
       signEvent: (event) => Promise.resolve(Object.assign({}, event, { id: 'signed' }))
@@ -280,7 +287,7 @@ add('zap helpers build NIP-57 requests and unsigned invoices', async () => {
 
 add('createZapInvoice fetches LNURL metadata and callback invoices', async () => {
   const calls = [];
-  const result = await citrine.createZapInvoice({
+  const result = await citrine.zaps.createZapInvoice({
     lud16: 'alice@wallet.example',
     sats: 100,
     note: 'nice post',
@@ -313,16 +320,16 @@ add('createZapInvoice fetches LNURL metadata and callback invoices', async () =>
 });
 
 add('NIP-55 helpers build callback URIs and parse signer returns', () => {
-  const callback = citrine.buildNip55CallbackUrl('https://app.example/play?x=1#old=1');
+  const callback = citrine.nostr.buildNip55CallbackUrl('https://app.example/play?x=1#old=1');
   assert.strictEqual(callback, 'https://app.example/play#nostrSignerResult=');
-  const uri = citrine.buildNip55Uri({
+  const uri = citrine.nostr.buildNip55Uri({
     type: 'get_public_key',
     params: { appName: 'Citrine', callbackUrl: callback, permissions: [] }
   });
   assert(uri.startsWith('nostrsigner:?'));
   assert(uri.includes('type=get_public_key'));
   assert(uri.includes('callbackUrl='));
-  const parsed = citrine.parseNip55Callback('https://app.example/play?package=x#nostrSignerResult=' + 'c'.repeat(64));
+  const parsed = citrine.nostr.parseNip55Callback('https://app.example/play?package=x#nostrSignerResult=' + 'c'.repeat(64));
   assert.strictEqual(parsed.present, true);
   assert.strictEqual(parsed.rejected, false);
   assert.strictEqual(parsed.result, 'c'.repeat(64));
@@ -345,10 +352,10 @@ add('WebLN copy and zap flow helpers stay headless', async () => {
       }
     }
   };
-  assert.deepStrictEqual(await citrine.payLightningInvoiceWithWebLN('lnbc1test', target), { preimage: 'ok' });
+  assert.deepStrictEqual(await citrine.zaps.payLightningInvoiceWithWebLN('lnbc1test', target), { preimage: 'ok' });
   assert.deepStrictEqual(payments, ['lnbc1test']);
-  assert.strictEqual(await citrine.copyTextToClipboard('lnbc1test', target), 'lnbc1test');
-  const flow = citrine.createZapFlow({ target });
+  assert.strictEqual(await citrine.zaps.copyTextToClipboard('lnbc1test', target), 'lnbc1test');
+  const flow = citrine.zaps.createZapFlow({ target });
   assert.deepStrictEqual(await flow.payInvoice('lnbc1again'), { preimage: 'ok' });
   assert.strictEqual(await flow.copyInvoice('lnbc1again'), 'lnbc1again');
 });
@@ -366,7 +373,7 @@ add('bindSignerReturnRefresh listens to pageshow focus and visible return', () =
     removeEventListener: (name) => { delete listeners[name]; }
   };
   const calls = [];
-  const unbind = citrine.bindSignerReturnRefresh(target, (reason) => calls.push(reason));
+  const unbind = citrine.nostr.bindSignerReturnRefresh(target, (reason) => calls.push(reason));
   listeners.pageshow();
   listeners.focus();
   docListeners.visibilitychange();

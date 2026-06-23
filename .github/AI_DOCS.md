@@ -5,6 +5,9 @@
 - Citrine follows Wizardry-family source-only repo hygiene.
 - Browser JavaScript is an approved boundary because Citrine is a browser
   Nostr helper library.
+- The browser runtime API is only lowercase `window.citrine` with the
+  `nostr`, `zaps`, and `web` namespaces. Do not add uppercase globals, flat
+  helper aliases, or legacy compatibility exports.
 - POSIX `sh` owns validation entrypoints.
 - Node is used only by `.tests/test-citrine.sh` to execute JavaScript unit
   tests; no package manager, dependency cache, or build output belongs here.
