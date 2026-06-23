@@ -1,11 +1,11 @@
-# Citrine Consumer Plan
+# citrine Consumer Plan
 
 ## Gazeta
 
 - Keep Gazeta's server challenge, session, CSRF, admin authorization, zap modal
   UI, amount presets, invoice copy/payment UI, and site page prefetch/bootstrap
   in Gazeta.
-- Citrine adapter points:
+- citrine adapter points:
   - `buildNostrConnectUri`
   - `extractConnectSecret`
   - Nostr login dialog and recommendations
@@ -23,7 +23,7 @@
 
 - Keep Pieplate's anonymous-first game flow, draft sync, and compact account UI
   in Pieplate.
-- Citrine adapter points:
+- citrine adapter points:
   - `buildNostrConnectUri`
   - tab-scoped NIP-46 storage adapter
   - `getAccountPubkeyWithRetry`
@@ -33,8 +33,8 @@
 
 ## Migration Rule
 
-- Adopt Citrine in one app at a time after its current local regression tests
+- Adopt citrine in one app at a time after its current local regression tests
   pass.
 - Do not replace product copy or storage policy during the first adoption.
-- Add one consumer-side assertion for each Citrine behavior removed from local
+- Add one consumer-side assertion for each citrine behavior removed from local
   source so regressions stay visible at the app boundary.

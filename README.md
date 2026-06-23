@@ -1,6 +1,6 @@
 # citrine
 
-Citrine is a dependency-free browser helper library for Nostr login and zap
+citrine is a dependency-free browser helper library for Nostr login and zap
 flows in Wizardry-family hosted web apps. It holds reusable Nostr and Lightning
 protocol mechanics without taking over a site's account model, authorization
 policy, persistence policy, or product UI.
@@ -19,7 +19,7 @@ same `{ nostr, zaps, web }` object.
 
 ## What Belongs Here
 
-Citrine owns reusable browser Nostr and zap helpers:
+citrine owns reusable browser Nostr and zap helpers:
 
 - NIP-07 browser signer detection.
 - NIP-46 Nostr Connect pairing, relay/RPC helpers, signer/account pubkey
@@ -34,7 +34,7 @@ Citrine owns reusable browser Nostr and zap helpers:
 - NIP-57 zap mechanics: LNURL metadata lookup, zap request templates, signed
   zap requests, callback invoice requests, WebLN payment, and clipboard copy.
 
-Citrine does not own site-specific behavior:
+citrine does not own site-specific behavior:
 
 - Server challenge issuance, session, CSRF, admin, or permission policy.
 - Site-specific relay defaults, app metadata, route handling, or deployment.
@@ -53,7 +53,7 @@ and load it before code that uses `window.citrine`.
 ```
 
 For NIP-46 relay work, the host page must also provide a compatible
-`window.NostrTools` bundle. Citrine deliberately does not include or install
+`window.NostrTools` bundle. citrine deliberately does not include or install
 that dependency.
 
 ## Quick Start
@@ -174,13 +174,13 @@ var result = await window.citrine.zaps.createZapInvoice({
   sessions.
 
 `hasNostrTools(target)`
-: Checks whether `target.NostrTools` has the substrate needed by Citrine's
+: Checks whether `target.NostrTools` has the substrate needed by citrine's
   NIP-46 client.
 
 `waitForNostrTools(options)`
 : Waits for `target.NostrTools`. Accepts `target`, `document`, `timeoutMs`,
   `intervalMs`, `scriptSrc`, and `errorMessage`. If `scriptSrc` is provided,
-  Citrine appends one script tag marked `data-citrine-nostr-tools="true"`.
+  citrine appends one script tag marked `data-citrine-nostr-tools="true"`.
 
 `createNip46Client(options)`
 : Creates a Nostr Connect client. Accepts `nostrTools`, `relays`,
@@ -320,18 +320,18 @@ The returned client exposes:
 
 ## Consumer Responsibilities
 
-Sites that use Citrine still need to own their own policy:
+Sites that use citrine still need to own their own policy:
 
 - Decide which relays, app metadata, and NIP-46 permissions to request.
 - Issue and validate server-side login challenges.
 - Store sessions, CSRF tokens, usernames, and authorization state.
 - Wire modal buttons, toasts, QR rendering, amount presets, and payment UI.
-- Preserve any deployment-managed source and vendored Citrine file in tracked
+- Preserve any deployment-managed source and vendored citrine file in tracked
   source, not generated build output.
 
 ## Validation
 
-Run the Citrine test suite with:
+Run the citrine test suite with:
 
 ```sh
 sh .tests/test-citrine.sh
@@ -344,4 +344,4 @@ refresh binding.
 
 ## License
 
-Citrine is licensed under the Open Wizardry License 3.1. See `LICENSE`.
+citrine is licensed under the Open Wizardry License 3.1. See `LICENSE`.

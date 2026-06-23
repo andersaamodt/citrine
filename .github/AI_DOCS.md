@@ -1,9 +1,9 @@
-# Citrine AI Notes
+# citrine AI Notes
 
 ## Standards
 
-- Citrine follows Wizardry-family source-only repo hygiene.
-- Browser JavaScript is an approved boundary because Citrine is a browser
+- citrine follows Wizardry-family source-only repo hygiene.
+- Browser JavaScript is an approved boundary because citrine is a browser
   Nostr helper library.
 - The browser runtime API is only lowercase `window.citrine` with the
   `nostr`, `zaps`, and `web` namespaces. Do not add uppercase globals, flat
@@ -12,7 +12,7 @@
 - Node is used only by `.tests/test-citrine.sh` to execute JavaScript unit
   tests; no package manager, dependency cache, or build output belongs here.
 - Test output must stay in `${TMPDIR:-/tmp}` or process output, not the repo.
-- Follow `.github/NOSTR_TOOLS_AUDIT.md` before replacing Citrine internals with
+- Follow `.github/NOSTR_TOOLS_AUDIT.md` before replacing citrine internals with
   `nostr-tools` helpers.
 
 ## Scope
@@ -34,6 +34,6 @@
   if setup is still async, make the next tap explicit.
 - Zap UI can stay site-specific, but LNURL resolution, Bech32 LNURL encoding,
   NIP-57 zap request construction, and callback invoice requests are shared
-  protocol work and belong in Citrine.
+  protocol work and belong in citrine.
 - Android NIP-55 callback parsing and hash-fragment callback URL construction
-  are signer interoperability work and belong in Citrine, not individual sites.
+  are signer interoperability work and belong in citrine, not individual sites.
