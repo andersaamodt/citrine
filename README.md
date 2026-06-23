@@ -1,4 +1,4 @@
-# Citrine
+# citrine
 
 Citrine is a dependency-free browser helper library for Nostr login and zap
 flows in Wizardry-family hosted web apps. It holds reusable Nostr and Lightning
